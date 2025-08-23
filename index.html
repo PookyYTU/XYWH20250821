@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小雨微寒 - Memory</title>
+    
+    <!-- Favicon配置 -->
+    <link rel="icon" type="image/x-icon" href="./logo/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="./logo/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./logo/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./logo/apple-icon-180x180.png">
+    <link rel="manifest" href="./logo/manifest.json">
+    
+    <!-- CSS样式 -->
+    <link rel="stylesheet" href="./styles/main.css">
+    <link rel="stylesheet" href="./styles/components.css">
+    <link rel="stylesheet" href="./styles/responsive.css">
+    
+    <!-- 字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- 固定背景 -->
+    <div class="background-wrapper">
+        <div class="background-overlay"></div>
+    </div>
+
+    <!-- 固定导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-cloud"></i>
+                <span>小雨微寒</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#home" class="nav-link active">首页</a></li>
+                <li><a href="#food" class="nav-link">美食记录</a></li>
+                <li><a href="#movies" class="nav-link">电影记录</a></li>
+                <li><a href="#calendar" class="nav-link">时光日历</a></li>
+                <li><a href="#files" class="nav-link">文件暂存</a></li>
+            </ul>
+            <div class="nav-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容区域 -->
+    <main class="main-content">
+        <!-- 首页部分 -->
+        <section id="home" class="section active">
+            <div class="hero-section">
+                <h1 class="hero-title">小雨微寒</h1>
+                <p class="hero-subtitle">记录每一天</p>
+                
+                <!-- 时光计数器 -->
+                <div class="time-counter">
+                    <div class="counter-item">
+                        <span class="counter-label">相恋</span>
+                        <span class="counter-value" id="lovedays">0</span>
+                        <span class="counter-unit">天</span>
+                    </div>
+                    <div class="counter-divider"></div>
+                    <div class="counter-item">
+                        <span class="counter-label">距离她的生日</span>
+                        <span class="counter-value" id="birthday">0</span>
+                        <span class="counter-unit">天</span>
+                    </div>
+                </div>
+
+                <!-- 快捷入口 -->
+                <div class="quick-actions">
+                    <button class="action-btn" onclick="showSection('food')">
+                        <i class="fas fa-utensils"></i>
+                        <span>美食记录</span>
+                    </button>
+                    <button class="action-btn" onclick="showSection('movies')">
+                        <i class="fas fa-film"></i>
+                        <span>电影记录</span>
+                    </button>
+                    <button class="action-btn" onclick="showSection('calendar')">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>时光日历</span>
+                    </button>
+                    <button class="action-btn" onclick="showSection('files')">
+                        <i class="fas fa-folder"></i>
+                        <span>文件暂存</span>
+                    </button>
+                </div>
+
+                <!-- 球球纪念区域 -->
+                <div class="home-memorial-section">
+                    <div class="memorial-decorations">
+                        <i class="fas fa-paw paw-print paw-1"></i>
+                        <i class="fas fa-paw paw-print paw-2"></i>
+                        <i class="fas fa-paw paw-print paw-3"></i>
+                        <i class="fas fa-paw paw-print paw-4"></i>
+                        <i class="fas fa-paw paw-print paw-5"></i>
+                        <i class="fas fa-paw paw-print paw-6"></i>
+                        <i class="fas fa-paw paw-print paw-7"></i>
+                        <i class="fas fa-paw paw-print paw-8"></i>
+                    </div>
+                    <div class="home-memorial-content">
+                        <div class="memorial-image">
+                            <img src="./qiuqiu1.jpg" alt="球球" class="qiuqiu-photo">
+                            <div class="memorial-overlay">
+                                <i class="fas fa-heart"></i>
+                            </div>
+                        </div>
+                        <div class="memorial-text">
+                            <h3>球球</h3>
+                            <p>虽然你已离开，但不会忘记你的活泼可爱。</p>
+                            <p>你摇着尾巴的样子充满了温暖。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 美食记录部分 -->
+        <section id="food" class="section">
+            <div class="section-header">
+                <h2>美食记录</h2>
+                <button class="add-btn" onclick="openFoodModal()">
+                    <i class="fas fa-plus"></i>
+                    添加美食
+                </button>
+            </div>
+            <div class="cards-grid" id="foodGrid">
+                <!-- 美食卡片将在这里动态生成 -->
+            </div>
+        </section>
+
+        <!-- 电影记录部分 -->
+        <section id="movies" class="section">
+            <div class="section-header">
+                <h2>电影记录</h2>
+                <button class="add-btn" onclick="openMovieModal()">
+                    <i class="fas fa-plus"></i>
+                    添加电影
+                </button>
+            </div>
+            <div class="cards-grid" id="movieGrid">
+                <!-- 电影卡片将在这里动态生成 -->
+            </div>
+        </section>
+
+        <!-- 时光日历部分 -->
+        <section id="calendar" class="section">
+            <div class="section-header">
+                <h2>时光日历</h2>
+                <div class="calendar-controls">
+                    <button class="calendar-nav" id="prevMonth">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="calendar-title" id="calendarTitle"></span>
+                    <button class="calendar-nav" id="nextMonth">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="calendar-container">
+                <div class="calendar" id="calendar"></div>
+            </div>
+        </section>
+
+        <!-- 球球纪念角部分 -->
+        <section id="memorial" class="section">
+            <div class="memorial-container">
+                <h2 class="memorial-title">球球纪念角</h2>
+                <div class="memorial-content">
+                    <div class="memorial-image">
+                        <img src="./qiuqiu1.jpg" alt="球球" class="qiuqiu-photo">
+                        <div class="memorial-overlay">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                    </div>
+                    <div class="memorial-text">
+                        <h3>我们永远的球球</h3>
+                        <p>虽然你已经离开了我们，但在我们心中，你永远是那个活泼可爱的小天使。</p>
+                        <p>每当想起你摇着尾巴迎接我们回家的样子，心中就充满了温暖。</p>
+                        <p>球球，我们爱你，永远想念你。</p>
+                        <div class="memorial-quote">
+                            "小狗的生命虽然短暂，但给我们留下的爱是永恒的。"
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 文件暂存部分 -->
+        <section id="files" class="section">
+            <div class="section-header">
+                <h2>文件暂存</h2>
+                <button class="add-btn" onclick="openFileModal()">
+                    <i class="fas fa-upload"></i>
+                    上传文件
+                </button>
+            </div>
+            <div class="file-upload-area" id="fileUploadArea">
+                <div class="upload-placeholder">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h3>拖拽文件至此处或点击上传</h3>
+                    <p>支持图片、文档、音频等多种格式</p>
+                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                        <i class="fas fa-plus"></i>
+                        选择文件
+                    </button>
+                    <input type="file" id="fileInput" multiple accept="*/*" style="display: none;">
+                </div>
+            </div>
+            <div class="files-grid" id="filesGrid">
+                <!-- 文件卡片将在这里动态生成 -->
+            </div>
+        </section>
+    </main>
+
+    <!-- 可拖动音乐播放器 -->
+    <div class="music-player" id="musicPlayer">
+        <div class="mini-player-content">
+            <button class="mini-control-btn" id="playPauseBtn">
+                <i class="fas fa-play"></i>
+            </button>
+            <div class="mini-song-info">
+                <div class="mini-song-title">信心花舍</div>
+                <div class="mini-progress-bar">
+                    <div class="mini-progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+        </div>
+        <audio id="audioPlayer" preload="metadata">
+            <source src="./background_music/信心花舍.mp3" type="audio/mpeg">
+        </audio>
+    </div>
+
+    <!-- 弹窗模态框 -->
+    <!-- 美食记录弹窗 -->
+    <div class="modal" id="foodModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>添加美食记录</h3>
+                <button class="close-btn" onclick="closeFoodModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form class="form" id="foodForm">
+                <div class="form-group">
+                    <label for="foodName">美食名称</label>
+                    <input type="text" id="foodName" required>
+                </div>
+                <div class="form-group">
+                    <label for="foodLocation">地点</label>
+                    <input type="text" id="foodLocation" required>
+                </div>
+                <div class="form-group">
+                    <label for="foodPrice">价格</label>
+                    <input type="number" id="foodPrice" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="foodRating">评分</label>
+                    <select id="foodRating" required>
+                        <option value="">请选择</option>
+                        <option value="5">⭐⭐⭐⭐⭐</option>
+                        <option value="4">⭐⭐⭐⭐</option>
+                        <option value="3">⭐⭐⭐</option>
+                        <option value="2">⭐⭐</option>
+                        <option value="1">⭐</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="foodDate">日期</label>
+                    <input type="date" id="foodDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="foodNotes">备注</label>
+                    <textarea id="foodNotes" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeFoodModal()">取消</button>
+                    <button type="submit" class="btn-primary">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 电影记录弹窗 -->
+    <div class="modal" id="movieModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>添加电影记录</h3>
+                <button class="close-btn" onclick="closeMovieModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form class="form" id="movieForm">
+                <div class="form-group">
+                    <label for="movieName">电影名称</label>
+                    <input type="text" id="movieName" required>
+                </div>
+                <div class="form-group">
+                    <label for="movieCinema">影院</label>
+                    <input type="text" id="movieCinema" required>
+                </div>
+                <div class="form-group">
+                    <label for="movieDate">观影日期</label>
+                    <input type="date" id="movieDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="movieRating">评分</label>
+                    <select id="movieRating" required>
+                        <option value="">请选择</option>
+                        <option value="5">⭐⭐⭐⭐⭐</option>
+                        <option value="4">⭐⭐⭐⭐</option>
+                        <option value="3">⭐⭐⭐</option>
+                        <option value="2">⭐⭐</option>
+                        <option value="1">⭐</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="movieReview">影评</label>
+                    <textarea id="movieReview" rows="4"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeMovieModal()">取消</button>
+                    <button type="submit" class="btn-primary">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 日历备注弹窗 -->
+    <div class="modal" id="noteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>日期备注</h3>
+                <button class="close-btn" onclick="closeNoteModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form class="form" id="noteForm">
+                <div class="form-group">
+                    <label for="selectedDate">日期</label>
+                    <input type="text" id="selectedDate" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="noteContent">备注内容</label>
+                    <textarea id="noteContent" rows="4" placeholder="记录这一天的美好回忆..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeNoteModal()">取消</button>
+                    <button type="submit" class="btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 文件上传弹窗 -->
+    <div class="modal" id="fileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>文件信息</h3>
+                <button class="close-btn" onclick="closeFileModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form class="form" id="fileForm">
+                <div class="form-group">
+                    <label for="fileName">文件名称</label>
+                    <input type="text" id="fileName" required>
+                </div>
+                <div class="form-group">
+                    <label for="fileDescription">文件描述</label>
+                    <textarea id="fileDescription" rows="3" placeholder="简单描述一下这个文件..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="fileCategory">文件分类</label>
+                    <select id="fileCategory" required>
+                        <option value="">请选择</option>
+                        <option value="image">图片</option>
+                        <option value="document">文档</option>
+                        <option value="audio">音频</option>
+                        <option value="video">视频</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeFileModal()">取消</button>
+                    <button type="submit" class="btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 页脚区域 -->
+    <footer class="bg-dark text-white py-10">
+        <div class="container mx-auto px-4">
+            <div class="text-center">
+                <h3 class="text-xl font-semibold mb-4 flex items-center justify-center">
+                    <i class="fa fa-cloud mr-2"></i> 小雨微寒
+                </h3>
+                <div class="flex justify-center space-x-4 mb-6">
+                    <a href="#" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary transition-colors duration-200">
+                        <i class="fa fa-weixin"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary transition-colors duration-200">
+                        <i class="fa fa-weibo"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary transition-colors duration-200">
+                        <i class="fa fa-github"></i>
+                    </a>
+                </div>
+                <div class="footer-tagline mb-4">
+                    信心花舍 - 特殊为你开铺
+                </div>
+                <p class="text-white/50 text-sm">
+                    &copy; 2025 小雨微寒
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="./scripts/main.js"></script>
+    <script src="./scripts/music.js"></script>
+    <script src="./scripts/calendar.js"></script>
+    <script src="./scripts/data.js"></script>
+</body>
+</html>
