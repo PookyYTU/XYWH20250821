@@ -57,8 +57,25 @@ fi
 
 # 设置权限
 echo "🔐 设置文件权限..."
+
+# 处理宝塔的.user.ini文件保护
+echo "🔧 处理宝塔文件保护..."
+if [ -f "$PROJECT_DIR/.user.ini" ]; then
+    echo "发现.user.ini文件，移除保护属性..."
+    chattr -i $PROJECT_DIR/.user.ini 2>/dev/null || true
+fi
+
+# 查找并处理其他可能被保护的ini文件
+find $PROJECT_DIR -name "*.ini" -exec chattr -i {} \; 2>/dev/null || true
+
 chown -R www:www $PROJECT_DIR
 chmod -R 755 $PROJECT_DIR
+
+# 恢复.user.ini文件保护（如果存在）
+if [ -f "$PROJECT_DIR/.user.ini" ]; then
+    echo "恢复.user.ini文件保护..."
+    chattr +i $PROJECT_DIR/.user.ini 2>/dev/null || true
+fi
 
 # 创建Python虚拟环境
 echo "🐍 创建Python虚拟环境..."
