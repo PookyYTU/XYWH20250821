@@ -2,10 +2,11 @@
 
 // 全局变量
 let currentSection = 'home';
-let foodRecords = JSON.parse(localStorage.getItem('foodRecords')) || [];
-let movieRecords = JSON.parse(localStorage.getItem('movieRecords')) || [];
-let calendarNotes = JSON.parse(localStorage.getItem('calendarNotes')) || {};
-let fileRecords = JSON.parse(localStorage.getItem('fileRecords')) || [];
+// 注意：不再使用全局数组，改用API
+// let foodRecords = JSON.parse(localStorage.getItem('foodRecords')) || [];
+// let movieRecords = JSON.parse(localStorage.getItem('movieRecords')) || [];
+// let calendarNotes = JSON.parse(localStorage.getItem('calendarNotes')) || {};
+// let fileRecords = JSON.parse(localStorage.getItem('fileRecords')) || [];
 
 // DOM加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
@@ -13,12 +14,18 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // 应用初始化
-function initializeApp() {
+async function initializeApp() {
     setupNavigation();
     setupTimeCounter();
     setupModals();
-    updateFoodGrid();
-    updateMovieGrid();
+    
+    // 等待API服务初始化
+    await waitForApiService();
+    
+    // 初始化数据显示
+    await updateFoodGrid();
+    await updateMovieGrid();
+    
     initializeCalendar();
     initializeMusicPlayer();
     setupMobileMenu();
@@ -28,6 +35,29 @@ function initializeApp() {
     showSection('home');
     
     console.log('小雨微寒应用初始化完成');
+}
+
+// 等待API服务初始化
+async function waitForApiService() {
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    while (attempts < maxAttempts && !window.apiService) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+    }
+    
+    if (window.apiService) {
+        // 检查API连接
+        try {
+            await dataManager.checkApiHealth();
+            console.log('🚀 API服务连接成功');
+        } catch (error) {
+            console.warn('⚠️ API服务不可用，将使用本地模式');
+        }
+    } else {
+        console.warn('⚠️ API服务未初始化，将使用本地模式');
+    }
 }
 
 // 导航设置
@@ -177,28 +207,32 @@ function setupModals() {
 function setupFoodForm() {
     const form = document.getElementById('foodForm');
     if (form) {
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const formData = new FormData(form);
             const foodRecord = {
-                id: Date.now(),
                 name: document.getElementById('foodName').value,
                 location: document.getElementById('foodLocation').value,
                 price: parseFloat(document.getElementById('foodPrice').value),
                 rating: parseInt(document.getElementById('foodRating').value),
                 date: document.getElementById('foodDate').value,
-                notes: document.getElementById('foodNotes').value,
-                createdAt: new Date().toISOString()
+                notes: document.getElementById('foodNotes').value
             };
             
-            foodRecords.unshift(foodRecord);
-            localStorage.setItem('foodRecords', JSON.stringify(foodRecords));
-            
-            updateFoodGrid();
-            closeFoodModal();
-            showMessage('美食记录添加成功！', 'success');
-            form.reset();
+            try {
+                const success = await dataManager.addFoodRecord(foodRecord);
+                if (success) {
+                    await updateFoodGrid();
+                    closeFoodModal();
+                    showMessage('美食记录添加成功！', 'success');
+                    form.reset();
+                } else {
+                    showMessage('美食记录添加失败，请重试', 'error');
+                }
+            } catch (error) {
+                console.error('添加美食记录失败:', error);
+                showMessage('美食记录添加失败：' + error.message, 'error');
+            }
         });
     }
 }
@@ -207,26 +241,31 @@ function setupFoodForm() {
 function setupMovieForm() {
     const form = document.getElementById('movieForm');
     if (form) {
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const movieRecord = {
-                id: Date.now(),
                 name: document.getElementById('movieName').value,
                 cinema: document.getElementById('movieCinema').value,
                 date: document.getElementById('movieDate').value,
                 rating: parseInt(document.getElementById('movieRating').value),
-                review: document.getElementById('movieReview').value,
-                createdAt: new Date().toISOString()
+                review: document.getElementById('movieReview').value
             };
             
-            movieRecords.unshift(movieRecord);
-            localStorage.setItem('movieRecords', JSON.stringify(movieRecords));
-            
-            updateMovieGrid();
-            closeMovieModal();
-            showMessage('电影记录添加成功！', 'success');
-            form.reset();
+            try {
+                const success = await dataManager.addMovieRecord(movieRecord);
+                if (success) {
+                    await updateMovieGrid();
+                    closeMovieModal();
+                    showMessage('电影记录添加成功！', 'success');
+                    form.reset();
+                } else {
+                    showMessage('电影记录添加失败，请重试', 'error');
+                }
+            } catch (error) {
+                console.error('添加电影记录失败:', error);
+                showMessage('电影记录添加失败：' + error.message, 'error');
+            }
         });
     }
 }
@@ -235,19 +274,29 @@ function setupMovieForm() {
 function setupNoteForm() {
     const form = document.getElementById('noteForm');
     if (form) {
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const selectedDate = document.getElementById('selectedDate').value;
             const noteContent = document.getElementById('noteContent').value;
             
             if (selectedDate && noteContent.trim()) {
-                calendarNotes[selectedDate] = noteContent.trim();
-                localStorage.setItem('calendarNotes', JSON.stringify(calendarNotes));
-                
-                updateCalendarDisplay();
-                closeNoteModal();
-                showMessage('备注保存成功！', 'success');
+                try {
+                    const success = await dataManager.addCalendarNote(selectedDate, noteContent.trim());
+                    if (success) {
+                        updateCalendarDisplay();
+                        closeNoteModal();
+                        showMessage('备注保存成功！', 'success');
+                    } else {
+                        showMessage('备注保存失败，请重试', 'error');
+                    }
+                } catch (error) {
+                    console.error('保存备注失败:', error);
+                    showMessage('备注保存失败：' + error.message, 'error');
+                }
+            } else {
+                showMessage('请输入备注内容', 'warning');
+            }
                 form.reset();
             }
         });
@@ -255,22 +304,35 @@ function setupNoteForm() {
 }
 
 // 更新美食网格
-function updateFoodGrid() {
+async function updateFoodGrid() {
     const grid = document.getElementById('foodGrid');
     if (!grid) return;
     
-    if (foodRecords.length === 0) {
+    try {
+        const foodRecords = await dataManager.getFoodRecords({ limit: 50, sort_order: 'desc' });
+        
+        if (foodRecords.length === 0) {
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-utensils"></i>
+                    <h3>还没有美食记录</h3>
+                    <p>开始记录你们一起品尝的美食吧！</p>
+                </div>
+            `;
+            return;
+        }
+        
+        grid.innerHTML = foodRecords.map(record => createFoodCard(record)).join('');
+    } catch (error) {
+        console.error('加载美食记录失败:', error);
         grid.innerHTML = `
             <div class="empty-state">
-                <i class="fas fa-utensils"></i>
-                <h3>还没有美食记录</h3>
-                <p>开始记录你们一起品尝的美食吧！</p>
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>加载失败</h3>
+                <p>无法加载美食记录，请刷新页面重试</p>
             </div>
         `;
-        return;
     }
-    
-    grid.innerHTML = foodRecords.map(record => createFoodCard(record)).join('');
 }
 
 // 创建美食卡片
@@ -312,23 +374,35 @@ function createFoodCard(record) {
     `;
 }
 
-// 更新电影网格
-function updateMovieGrid() {
+async function updateMovieGrid() {
     const grid = document.getElementById('movieGrid');
     if (!grid) return;
     
-    if (movieRecords.length === 0) {
+    try {
+        const movieRecords = await dataManager.getMovieRecords({ limit: 50, sort_order: 'desc' });
+        
+        if (movieRecords.length === 0) {
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-film"></i>
+                    <h3>还没有电影记录</h3>
+                    <p>开始记录你们一起观看的电影吧！</p>
+                </div>
+            `;
+            return;
+        }
+        
+        grid.innerHTML = movieRecords.map(record => createMovieCard(record)).join('');
+    } catch (error) {
+        console.error('加载电影记录失败:', error);
         grid.innerHTML = `
             <div class="empty-state">
-                <i class="fas fa-film"></i>
-                <h3>还没有电影记录</h3>
-                <p>开始记录你们一起观看的电影吧！</p>
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>加载失败</h3>
+                <p>无法加载电影记录，请刷新页面重试</p>
             </div>
         `;
-        return;
     }
-    
-    grid.innerHTML = movieRecords.map(record => createMovieCard(record)).join('');
 }
 
 // 创建电影卡片
@@ -401,12 +475,23 @@ function closeMovieModal() {
     }
 }
 
-function openNoteModal(date) {
+async function openNoteModal(date) {
     const modal = document.getElementById('noteModal');
     if (modal) {
         modal.classList.add('active');
         document.getElementById('selectedDate').value = date;
-        document.getElementById('noteContent').value = calendarNotes[date] || '';
+        
+        // 加载当前备注
+        try {
+            const noteData = await dataManager.getNoteByDate(date);
+            const content = noteData ? noteData.content : '';
+            document.getElementById('noteContent').value = content;
+        } catch (error) {
+            console.warn('加载备注失败:', error);
+            // 使用本地存储作为备用
+            const calendarNotes = JSON.parse(localStorage.getItem('calendarNotes')) || {};
+            document.getElementById('noteContent').value = calendarNotes[date] || '';
+        }
     }
 }
 
@@ -418,21 +503,37 @@ function closeNoteModal() {
 }
 
 // 记录操作函数
-function deleteFood(id) {
+async function deleteFood(id) {
     if (confirm('确定要删除这条美食记录吗？')) {
-        foodRecords = foodRecords.filter(record => record.id !== id);
-        localStorage.setItem('foodRecords', JSON.stringify(foodRecords));
-        updateFoodGrid();
-        showMessage('美食记录已删除', 'success');
+        try {
+            const success = await dataManager.deleteFoodRecord(id);
+            if (success) {
+                await updateFoodGrid();
+                showMessage('美食记录已删除', 'success');
+            } else {
+                showMessage('删除失败，请重试', 'error');
+            }
+        } catch (error) {
+            console.error('删除美食记录失败:', error);
+            showMessage('删除失败：' + error.message, 'error');
+        }
     }
 }
 
-function deleteMovie(id) {
+async function deleteMovie(id) {
     if (confirm('确定要删除这条电影记录吗？')) {
-        movieRecords = movieRecords.filter(record => record.id !== id);
-        localStorage.setItem('movieRecords', JSON.stringify(movieRecords));
-        updateMovieGrid();
-        showMessage('电影记录已删除', 'success');
+        try {
+            const success = await dataManager.deleteMovieRecord(id);
+            if (success) {
+                await updateMovieGrid();
+                showMessage('电影记录已删除', 'success');
+            } else {
+                showMessage('删除失败，请重试', 'error');
+            }
+        } catch (error) {
+            console.error('删除电影记录失败:', error);
+            showMessage('删除失败：' + error.message, 'error');
+        }
     }
 }
 

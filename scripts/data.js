@@ -1,11 +1,8 @@
-// 数据管理功能 - 小雨微寒
+// 数据管理功能 - 小雨微寒 (使用后端API)
 
 class DataManager {
     constructor() {
         this.storageKeys = {
-            foodRecords: 'foodRecords',
-            movieRecords: 'movieRecords',
-            calendarNotes: 'calendarNotes',
             musicPlayerState: 'musicPlayerState',
             musicPlayerPosition: 'musicPlayerPosition',
             appSettings: 'appSettings'
@@ -16,15 +13,42 @@ class DataManager {
             autoplay: false,
             notifications: true,
             dataBackup: true,
-            lastBackup: null
+            lastBackup: null,
+            useApi: true // 使用API标志
         };
         
+        this.isOnline = navigator.onLine;
+        this.setupOnlineListener();
         this.init();
+    }
+    
+    setupOnlineListener() {
+        window.addEventListener('online', () => {
+            this.isOnline = true;
+            console.log('网络已连接，将使用API');
+            this.syncLocalDataToServer();
+        });
+        
+        window.addEventListener('offline', () => {
+            this.isOnline = false;
+            console.log('网络已断开，将使用本地存储');
+        });
+    }
+    
+    async syncLocalDataToServer() {
+        // 将本地数据同步到服务器（如果需要）
+        if (!this.isOnline || !window.apiService) return;
+        
+        try {
+            // 这里可以实现具体的同步逻辑
+            console.log('数据同步功能待实现');
+        } catch (error) {
+            console.error('数据同步失败:', error);
+        }
     }
     
     init() {
         this.initializeStorage();
-        this.setupAutoBackup();
         console.log('数据管理器初始化完成');
     }
     

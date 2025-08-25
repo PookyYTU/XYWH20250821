@@ -71,9 +71,35 @@ class Calendar {
         this.render();
     }
     
-    render() {
+    async render() {
         this.updateTitle();
+        
+        // 加载当月备注
+        await this.loadMonthNotes();
+        
         this.renderCalendar();
+    }
+    
+    async loadMonthNotes() {
+        try {
+            if (window.dataManager) {
+                this.monthNotes = await dataManager.getMonthNotes(this.currentYear, this.currentMonth + 1);
+            } else {
+                // 使用本地存储
+                const allNotes = JSON.parse(localStorage.getItem('calendarNotes')) || {};
+                this.monthNotes = {};
+                const prefix = `${this.currentYear}-${(this.currentMonth + 1).toString().padStart(2, '0')}-`;
+                
+                Object.keys(allNotes).forEach(date => {
+                    if (date.startsWith(prefix)) {
+                        this.monthNotes[date] = allNotes[date];
+                    }
+                });
+            }
+        } catch (error) {
+            console.warn('加载月份备注失败:', error);
+            this.monthNotes = {};
+        }
     }
     
     updateTitle() {
@@ -177,10 +203,21 @@ class Calendar {
         return date <= today;
     }
     
-    hasNote(date) {
+    async hasNote(date) {
         const dateString = this.formatDate(date);
-        const notes = JSON.parse(localStorage.getItem('calendarNotes')) || {};
-        return notes[dateString] && notes[dateString].trim().length > 0;
+        
+        // 如果有缓存的月份备注，使用缓存
+        if (this.monthNotes && this.monthNotes[dateString]) {
+            return true;
+        }
+        
+        // 否则检查本地存储（离线模式）
+        try {
+            const notes = JSON.parse(localStorage.getItem('calendarNotes')) || {};
+            return notes[dateString] && notes[dateString].trim().length > 0;
+        } catch (error) {
+            return false;
+        }
     }
     
     getTooltip(date) {
