@@ -44,15 +44,13 @@ fi
 echo "✅ 宝塔环境检查完成"
 
 # 检查Python3.10
-if ! command -v python3.10 &> /dev/null; then
-    echo "❌ Python 3.10 未安装，请先安装Python 3.10"
-    echo "参考命令："
-    echo "sudo yum groupinstall -y 'Development Tools'"
-    echo "sudo yum install -y openssl-devel libffi-devel bzip2-devel"
-    echo "cd /tmp && wget https://www.python.org/ftp/python/3.10.12/Python-3.10.12.tgz"
-    echo "tar -xzf Python-3.10.12.tgz && cd Python-3.10.12"
-    echo "./configure --enable-optimizations && make -j \$(nproc) && sudo make altinstall"
+if [ ! -f "/usr/local/bin/python3.10" ]; then
+    echo "❌ Python 3.10 未安装在 /usr/local/bin/python3.10"
+    echo "请检查Python 3.10是否正确安装"
+    echo "如果已安装，请确认安装路径是否为 /usr/local/bin/python3.10"
     exit 1
+else
+    echo "✅ 检测到Python 3.10: $(/usr/local/bin/python3.10 --version)"
 fi
 
 # 检查MySQL
@@ -115,8 +113,8 @@ chown -R www:www uploads logs
 
 # 配置数据库
 echo "🗄️  配置数据库..."
-# 使用root用户（如果宝塔专用用户不可用）
-mysql_user="root"
+# 使用宝塔创建的数据库用户（测试已成功）
+mysql_user="xiaoyuweihan"
 mysql_password="Duan1999"
 mysql_database="xiaoyuweihan"
 
