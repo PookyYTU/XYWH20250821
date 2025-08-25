@@ -115,8 +115,8 @@ chown -R www:www uploads logs
 
 # 配置数据库
 echo "🗄️  配置数据库..."
-# 使用宝塔创建的数据库用户
-mysql_user="xiaoyuweihan"
+# 使用root用户（如果宝塔专用用户不可用）
+mysql_user="root"
 mysql_password="Duan1999"
 mysql_database="xiaoyuweihan"
 
@@ -129,11 +129,12 @@ if [ $? -ne 0 ]; then
     echo "2. 数据库用户: $mysql_user"
     echo "3. 数据库密码: $mysql_password"
     echo "4. 可以手动测试: mysql -u $mysql_user -p"
-    echo "5. 确认宝塔面板中数据库xiaoyuweihan是否存在"
     exit 1
 fi
 
-echo "✅ 数据库连接成功"
+# 创建数据库（如果不存在）
+mysql -u $mysql_user -p$mysql_password -e "CREATE DATABASE IF NOT EXISTS $mysql_database CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+echo "✅ 数据库配置成功"
 echo "数据库: $mysql_database"
 echo "用户: $mysql_user"
 
