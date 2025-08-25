@@ -7,8 +7,8 @@ class Settings(BaseSettings):
     """应用配置"""
     
     # 基础配置
-    DEBUG: bool = True
-    SECRET_KEY: str = "xiaoyuweihan_secret_key_2025"
+    DEBUG: bool = False  # 生产环境
+    SECRET_KEY: str = "xiaoyuweihan_secret_key_2025_production"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     DB_NAME: str = "xiaoyuweihan"
     
     # 文件上传配置
-    UPLOAD_DIR: str = "uploads"
+    UPLOAD_DIR: str = "/www/wwwroot/xiaoyuweihan/backend/uploads"
     MAX_FILE_SIZE: int = 50000000  # 50MB
     ALLOWED_EXTENSIONS: str = ".jpg,.jpeg,.png,.gif,.bmp,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md,.mp3,.mp4,.avi,.mov,.zip,.rar"
     
@@ -60,7 +60,7 @@ class Settings(BaseSettings):
             ]
     
     class Config:
-        env_file = ".env"
+        env_file = ".env"  # 现在使用正确的JSON格式
         env_file_encoding = 'utf-8'
         # 避免复杂类型的自动JSON解析
         env_nested_delimiter = '__'
