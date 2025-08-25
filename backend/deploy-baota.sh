@@ -160,20 +160,7 @@ server {
     # 设置客户端最大请求体大小
     client_max_body_size 50M;
     
-    # 前端静态文件
-    location / {
-        root /www/wwwroot/xiaoyuweihan;
-        index index.html;
-        try_files $uri $uri/ /index.html;
-        
-        # 设置缓存
-        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-            expires 1y;
-            add_header Cache-Control "public, immutable";
-        }
-    }
-    
-    # 后端API代理
+    # 后端API代理（优先匹配）
     location /api/ {
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host $host;
@@ -192,6 +179,30 @@ server {
         proxy_set_header Connection "upgrade";
     }
     
+    # API文档页面（精确匹配）
+    location = /docs {
+        proxy_pass http://127.0.0.1:8000/docs;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    # OpenAPI JSON（精确匹配）
+    location = /openapi.json {
+        proxy_pass http://127.0.0.1:8000/openapi.json;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    # 健康检查（精确匹配）
+    location = /health {
+        proxy_pass http://127.0.0.1:8000/api/health;
+        access_log off;
+    }
+    
     # 文件上传下载
     location /uploads/ {
         proxy_pass http://127.0.0.1:8000;
@@ -201,10 +212,17 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
     
-    # 健康检查
-    location /health {
-        proxy_pass http://127.0.0.1:8000/api/health;
-        access_log off;
+    # 前端静态文件（最后匹配）
+    location / {
+        root /www/wwwroot/xiaoyuweihan;
+        index index.html;
+        try_files $uri $uri/ /index.html;
+        
+        # 设置缓存
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
     }
     
     # 安全设置
