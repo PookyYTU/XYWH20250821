@@ -1,5 +1,7 @@
 from pydantic_settings import BaseSettings
-from typing import List
+from pydantic import field_validator
+from typing import List, Union
+import os
 
 class Settings(BaseSettings):
     """应用配置"""
@@ -33,8 +35,36 @@ class Settings(BaseSettings):
         "*"  # 开发环境允许所有来源
     ]
     
+    @field_validator('ALLOWED_ORIGINS', mode='before')
+    @classmethod
+    def parse_allowed_origins(cls, v):
+        """处理ALLOWED_ORIGINS环境变量"""
+        if isinstance(v, str):
+            # 如果是字符串，尝试以逗号分割
+            if ',' in v:
+                return [origin.strip() for origin in v.split(',')]
+            else:
+                return [v.strip()]
+        elif isinstance(v, list):
+            return v
+        else:
+            # 返回默认值
+            return [
+                "http://localhost:3000",
+                "http://127.0.0.1:3000", 
+                "http://47.105.52.49",
+                "http://47.105.52.49:8000",
+                "http://47.105.52.49:80",
+                "http://47.105.52.49:443",
+                "*"
+            ]
+    
     class Config:
         env_file = ".env"
+        env_file_encoding = 'utf-8'
+        # 避免复杂类型的自动JSON解析
+        env_nested_delimiter = '__'
+        case_sensitive = False
     
     @property
     def database_url(self) -> str:
