@@ -73,6 +73,11 @@ XYWH20250821/
 │   ├── main.css              # 主要样式
 │   ├── components.css        # 组件样式
 │   └── responsive.css        # 响应式样式
+├── docs/                      # 项目文档
+│   ├── TECHNICAL.md          # 技术文档
+│   ├── API.md                # API接口文档
+│   ├── DEVELOPMENT.md        # 开发指南
+│   └── DEPLOYMENT-GUIDE.md   # 部署指南
 ├── logo/                      # 网站图标
 ├── background_music/          # 背景音乐
 ├── index.html                 # 主页文件
@@ -462,9 +467,18 @@ nginx -s reload
 
 本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
 
+## 📚 相关文档
+
+- **[技术文档](docs/TECHNICAL.md)** - 详细的技术架构和设计文档
+- **[API文档](docs/API.md)** - 完整的API接口文档
+- **[开发指南](docs/DEVELOPMENT.md)** - 开发环境配置和开发规范
+- **[部署指南](docs/DEPLOYMENT-GUIDE.md)** - 生产环境部署说明
+- **[在线API文档](http://47.105.52.49/docs)** - Swagger交互式API文档
+
 ## 🙏 致谢
 
 感谢所有为这个项目贡献代码和想法的朋友们：Qoder & Trae。
+
 ---
 
 *用代码记录爱情，让回忆永远闪闪发光 ✨*
