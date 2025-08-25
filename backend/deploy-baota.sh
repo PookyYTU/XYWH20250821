@@ -43,10 +43,16 @@ fi
 
 echo "✅ 宝塔环境检查完成"
 
-# 检查Python3
-if ! command -v python3 &> /dev/null; then
-    echo "📦 正在安装Python3..."
-    yum install -y python3 python3-pip || apt update && apt install -y python3 python3-venv python3-pip
+# 检查Python3.10
+if ! command -v python3.10 &> /dev/null; then
+    echo "❌ Python 3.10 未安装，请先安装Python 3.10"
+    echo "参考命令："
+    echo "sudo yum groupinstall -y 'Development Tools'"
+    echo "sudo yum install -y openssl-devel libffi-devel bzip2-devel"
+    echo "cd /tmp && wget https://www.python.org/ftp/python/3.10.12/Python-3.10.12.tgz"
+    echo "tar -xzf Python-3.10.12.tgz && cd Python-3.10.12"
+    echo "./configure --enable-optimizations && make -j \$(nproc) && sudo make altinstall"
+    exit 1
 fi
 
 # 检查MySQL
@@ -78,12 +84,22 @@ if [ -f "$PROJECT_DIR/.user.ini" ]; then
 fi
 
 # 创建Python虚拟环境
-echo "🐍 创建Python虚拟环境..."
+echo "🐍 创建Python 3.10虚拟环境..."
 cd $BACKEND_DIR
 
-if [ ! -d "venv" ]; then
-    python3 -m venv venv
+# 删除旧的虚拟环境（如果存在）
+if [ -d "venv" ]; then
+    echo "删除旧的虚拟环境..."
+    rm -rf venv
 fi
+
+# 使用Python 3.10创建新的虚拟环境
+/usr/local/bin/python3.10 -m venv venv
+
+# 验证虚拟环境中的Python版本
+source venv/bin/activate
+echo "虚拟环境Python版本: $(python --version)"
+deactivate
 
 # 激活虚拟环境并安装依赖
 echo "📦 安装Python依赖..."
@@ -99,19 +115,27 @@ chown -R www:www uploads logs
 
 # 配置数据库
 echo "🗄️  配置数据库..."
-read -p "请输入MySQL root密码: " -s mysql_password
-echo ""
+# 使用宝塔创建的数据库用户
+mysql_user="xiaoyuweihan"
+mysql_password="Duan1999"
+mysql_database="xiaoyuweihan"
 
 # 测试数据库连接
-mysql -u root -p$mysql_password -e "SELECT 1;" &> /dev/null
+mysql -u $mysql_user -p$mysql_password -e "SELECT 1;" &> /dev/null
 if [ $? -ne 0 ]; then
-    echo "❌ 数据库连接失败，请检查密码"
+    echo "❌ 数据库连接失败，请检查MySQL服务和密码"
+    echo "请确认:"
+    echo "1. MySQL服务是否运行: systemctl status mysql"
+    echo "2. 数据库用户: $mysql_user"
+    echo "3. 数据库密码: $mysql_password"
+    echo "4. 可以手动测试: mysql -u $mysql_user -p"
+    echo "5. 确认宝塔面板中数据库xiaoyuweihan是否存在"
     exit 1
 fi
 
-# 创建数据库
-mysql -u root -p$mysql_password -e "CREATE DATABASE IF NOT EXISTS xiaoyuweihan CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-echo "✅ 数据库创建成功"
+echo "✅ 数据库连接成功"
+echo "数据库: $mysql_database"
+echo "用户: $mysql_user"
 
 # 配置systemd服务
 echo "⚙️  配置系统服务..."

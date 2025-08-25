@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     # 数据库配置
     DB_HOST: str = "localhost"
     DB_PORT: int = 3306
-    DB_USER: str = "root"
+    DB_USER: str = "xiaoyuweihan"  # 宝塔创建的专用数据库用户
     DB_PASSWORD: str = "Duan1999"
     DB_NAME: str = "xiaoyuweihan"
     
