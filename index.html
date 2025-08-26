@@ -424,11 +424,15 @@
     </footer>
 
     <!-- JavaScript -->
+    <!-- 1. 首先加载API服务 -->
     <script src="./scripts/api.js"></script>
+    
+    <!-- 2. 然后加载数据管理器（只保留api-data.js，移除冲突的data.js） -->
     <script src="./scripts/api-data.js"></script>
+    
+    <!-- 3. 加载核心功能模块 -->
     <script src="./scripts/main.js"></script>
     <script src="./scripts/music.js"></script>
     <script src="./scripts/calendar.js"></script>
-    <script src="./scripts/data.js"></script>
 </body>
 </html>

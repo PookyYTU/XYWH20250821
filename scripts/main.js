@@ -15,26 +15,52 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 应用初始化
 async function initializeApp() {
-    setupNavigation();
-    setupTimeCounter();
-    setupModals();
+    console.log('🚀 小雨微寒应用初始化开始...');
     
-    // 等待API服务初始化
-    await waitForApiService();
-    
-    // 初始化数据显示
-    await updateFoodGrid();
-    await updateMovieGrid();
-    
-    initializeCalendar();
-    initializeMusicPlayer();
-    setupMobileMenu();
-    initializeFileManager();
-    
-    // 设置默认显示首页
-    showSection('home');
-    
-    console.log('小雨微寒应用初始化完成');
+    try {
+        console.log('1️⃣ 设置导航...');
+        setupNavigation();
+        
+        console.log('2️⃣ 设置时光计数器...');
+        setupTimeCounter();
+        
+        console.log('3️⃣ 设置模态框...');
+        setupModals();
+        
+        console.log('4️⃣ 等待API服务初始化...');
+        await waitForApiService();
+        
+        console.log('5️⃣ 初始化数据显示...');
+        try {
+            await updateFoodGrid();
+            await updateMovieGrid();
+        } catch (error) {
+            console.warn('⚠️ 数据加载失败，将使用空状态:', error.message);
+        }
+        
+        console.log('6️⃣ 初始化日历...');
+        initializeCalendar();
+        
+        console.log('7️⃣ 初始化音乐播放器...');
+        initializeMusicPlayer();
+        
+        console.log('8️⃣ 设置移动端菜单...');
+        setupMobileMenu();
+        
+        console.log('9️⃣ 初始化文件管理器...');
+        initializeFileManager();
+        
+        console.log('🏠 设置默认显示首页...');
+        showSection('home');
+        
+        console.log('✅ 小雨微寒应用初始化完成！');
+    } catch (error) {
+        console.error('❌ 应用初始化失败:', error);
+        // 即使初始化失败，也要尽可能设置基本功能
+        setupNavigation();
+        setupTimeCounter();
+        showSection('home');
+    }
 }
 
 // 等待API服务初始化
@@ -42,21 +68,41 @@ async function waitForApiService() {
     let attempts = 0;
     const maxAttempts = 10;
     
+    // 等待apiService加载
     while (attempts < maxAttempts && !window.apiService) {
+        console.log(`⏳ 等待API服务加载... (${attempts + 1}/${maxAttempts})`);
         await new Promise(resolve => setTimeout(resolve, 100));
         attempts++;
     }
     
-    if (window.apiService) {
+    // 等待dataManager加载
+    attempts = 0;
+    while (attempts < maxAttempts && !window.dataManager) {
+        console.log(`⏳ 等待数据管理器加载... (${attempts + 1}/${maxAttempts})`);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+    }
+    
+    if (window.apiService && window.dataManager) {
         // 检查API连接
         try {
-            await dataManager.checkApiHealth();
-            console.log('🚀 API服务连接成功');
+            console.log('🎨 正在检查API连接...');
+            const isHealthy = await dataManager.checkApiHealth();
+            if (isHealthy) {
+                console.log('🚀 API服务连接成功');
+            } else {
+                console.warn('⚠️ API服务不可用，将使用本地模式');
+            }
         } catch (error) {
-            console.warn('⚠️ API服务不可用，将使用本地模式');
+            console.warn('⚠️ API服务不可用，将使用本地模式:', error.message);
         }
     } else {
-        console.warn('⚠️ API服务未初始化，将使用本地模式');
+        if (!window.apiService) {
+            console.warn('⚠️ API服务未初始化，将使用本地模式');
+        }
+        if (!window.dataManager) {
+            console.warn('⚠️ 数据管理器未初始化，部分功能可能不可用');
+        }
     }
 }
 
@@ -139,17 +185,25 @@ function setupMobileMenu() {
 
 // 时光计数器设置
 function setupTimeCounter() {
+    console.log('⏰ 开始设置时光计数器...');
+    
     const loveStartDate = new Date('2024-04-05');
     const birthdayDate = new Date('2000-07-08');
     
     function updateCounters() {
         const now = new Date();
+        console.log('🕐 更新计数器，当前时间:', now);
         
         // 计算相恋天数
         const loveDays = Math.floor((now - loveStartDate) / (1000 * 60 * 60 * 24));
+        console.log('❤️ 相恋天数:', loveDays);
+        
         const loveDaysElement = document.getElementById('lovedays');
         if (loveDaysElement) {
             loveDaysElement.textContent = loveDays;
+            console.log('✅ 已更新相恋天数显示');
+        } else {
+            console.error('❌ 找不到相恋天数元素 (lovedays)');
         }
         
         // 计算到下一个生日的天数
@@ -162,9 +216,14 @@ function setupTimeCounter() {
         }
         
         const birthdayDays = Math.ceil((nextBirthday - now) / (1000 * 60 * 60 * 24));
+        console.log('🎂 到生日天数:', birthdayDays);
+        
         const birthdayElement = document.getElementById('birthday');
         if (birthdayElement) {
             birthdayElement.textContent = birthdayDays;
+            console.log('✅ 已更新生日倒计时显示');
+        } else {
+            console.error('❌ 找不到生日元素 (birthday)');
         }
     }
     
@@ -173,6 +232,8 @@ function setupTimeCounter() {
     
     // 每天更新一次
     setInterval(updateCounters, 24 * 60 * 60 * 1000);
+    
+    console.log('✅ 时光计数器设置完成');
 }
 
 // 模态框设置
