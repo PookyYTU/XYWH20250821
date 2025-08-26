@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>服务器文件版本检查 - 小雨微寒</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 30px;
+        }
+        .status-card {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #cbd5e0;
+        }
+        .status-card.success {
+            border-left-color: #48bb78;
+            background: #f0fff4;
+        }
+        .status-card.error {
+            border-left-color: #f56565;
+            background: #fff5f5;
+        }
+        .status-card.warning {
+            border-left-color: #ed8936;
+            background: #fffaf0;
+        }
+        .check-button {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: background 0.3s;
+        }
+        .check-button:hover {
+            background: #3182ce;
+        }
+        .check-button:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+        }
+        .version-info {
+            font-family: 'Courier New', monospace;
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .instructions {
+            background: #ebf8ff;
+            border: 1px solid #bee3f8;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        .file-list {
+            list-style: none;
+            padding: 0;
+        }
+        .file-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .file-list li:last-child {
+            border-bottom: none;
+        }
+        .file-status {
+            float: right;
+            font-weight: bold;
+        }
+        .file-status.updated {
+            color: #48bb78;
+        }
+        .file-status.outdated {
+            color: #f56565;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 服务器文件版本检查</h1>
+        
+        <div class="status-card">
+            <h3>📋 检查说明</h3>
+            <p>此工具用于检查服务器上的文件是否已更新为修复版本。</p>
+            <p>如果显示"旧版本"，请按照《服务器文件更新指南.md》上传最新文件。</p>
+        </div>
+
+        <div class="status-card" id="overallStatus">
+            <h3>🎯 整体状态</h3>
+            <p>点击下方按钮开始检查...</p>
+        </div>
+
+        <div style="text-align: center;">
+            <button class="check-button" onclick="checkAllFiles()">🔄 检查所有文件</button>
+            <button class="check-button" onclick="checkTimeCounter()">⏰ 测试时光计数器</button>
+            <button class="check-button" onclick="checkAPI()">🔗 测试API连接</button>
+        </div>
+
+        <div class="status-card">
+            <h3>📁 文件版本状态</h3>
+            <ul class="file-list" id="fileList">
+                <li>scripts/main.js <span class="file-status" id="mainjs-status">未检查</span></li>
+                <li>scripts/api-data.js <span class="file-status" id="apidata-status">未检查</span></li>
+                <li>index.html <span class="file-status" id="indexhtml-status">未检查</span></li>
+                <li>debug.html <span class="file-status" id="debughtml-status">未检查</span></li>
+            </ul>
+        </div>
+
+        <div class="status-card" id="testResults">
+            <h3>🧪 功能测试结果</h3>
+            <div id="testOutput">点击测试按钮查看结果...</div>
+        </div>
+
+        <div class="instructions">
+            <h3>📖 如何更新文件</h3>
+            <p><strong>1. 如果显示"旧版本"：</strong></p>
+            <ul>
+                <li>使用宝塔面板文件管理功能</li>
+                <li>导航到 <code>/www/wwwroot/xiaoyuweihan/</code></li>
+                <li>上传对应的最新文件，覆盖原文件</li>
+            </ul>
+            <p><strong>2. 上传完成后：</strong></p>
+            <ul>
+                <li>清除浏览器缓存 (Ctrl+F5)</li>
+                <li>重新运行此检查</li>
+                <li>访问主网站验证功能</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 预期的版本标识
+        const expectedVersions = {
+            'main.js': '时光计数器设置完成',
+            'api-data.js': '数据管理器已暴露到全局作用域',
+            'index.html': 'api-data.js',
+            'debug.html': 'waitForServices'
+        };
+
+        async function checkFileVersion(fileName, expectedMarker) {
+            try {
+                const response = await fetch(`./${fileName}?t=${Date.now()}`, {
+                    cache: 'no-cache'
+                });
+                
+                if (!response.ok) {
+                    return { status: 'error', message: `HTTP ${response.status}` };
+                }
+                
+                const content = await response.text();
+                const hasMarker = content.includes(expectedMarker);
+                
+                return {
+                    status: hasMarker ? 'updated' : 'outdated',
+                    message: hasMarker ? '最新版本' : '旧版本',
+                    found: hasMarker
+                };
+            } catch (error) {
+                return { status: 'error', message: error.message };
+            }
+        }
+
+        async function checkAllFiles() {
+            const overallStatus = document.getElementById('overallStatus');
+            overallStatus.innerHTML = '<h3>🔄 正在检查...</h3><p>请稍候...</p>';
+            
+            let allUpdated = true;
+            let results = [];
+
+            for (const [file, marker] of Object.entries(expectedVersions)) {
+                const result = await checkFileVersion(file, marker);
+                const statusElement = document.getElementById(file.replace('.', '').replace('/', '') + '-status');
+                
+                if (result.status === 'updated') {
+                    statusElement.textContent = '✅ 最新版本';
+                    statusElement.className = 'file-status updated';
+                } else {
+                    statusElement.textContent = '❌ ' + result.message;
+                    statusElement.className = 'file-status outdated';
+                    allUpdated = false;
+                }
+                
+                results.push({ file, ...result });
+            }
+
+            // 更新整体状态
+            if (allUpdated) {
+                overallStatus.innerHTML = `
+                    <h3>✅ 所有文件已更新</h3>
+                    <p>服务器上的文件都是最新版本！可以正常使用网站功能。</p>
+                `;
+                overallStatus.className = 'status-card success';
+            } else {
+                overallStatus.innerHTML = `
+                    <h3>⚠️ 发现旧版本文件</h3>
+                    <p>部分文件需要更新。请按照指南上传最新文件。</p>
+                `;
+                overallStatus.className = 'status-card warning';
+            }
+        }
+
+        async function checkTimeCounter() {
+            const output = document.getElementById('testOutput');
+            output.innerHTML = '<p>🔄 正在测试时光计数器...</p>';
+            
+            try {
+                // 计算预期值
+                const loveStartDate = new Date('2024-04-05');
+                const birthdayDate = new Date('2000-07-08');
+                const now = new Date();
+                
+                const expectedLoveDays = Math.floor((now - loveStartDate) / (1000 * 60 * 60 * 24));
+                
+                const thisYear = now.getFullYear();
+                let nextBirthday = new Date(thisYear, birthdayDate.getMonth(), birthdayDate.getDate());
+                if (nextBirthday < now) {
+                    nextBirthday = new Date(thisYear + 1, birthdayDate.getMonth(), birthdayDate.getDate());
+                }
+                const expectedBirthdayDays = Math.ceil((nextBirthday - now) / (1000 * 60 * 60 * 24));
+                
+                output.innerHTML = `
+                    <div class="version-info">
+⏰ 时光计数器测试结果：
+📅 当前日期: ${now.toLocaleDateString()}
+❤️ 预期相恋天数: ${expectedLoveDays} 天
+🎂 预期生日倒计时: ${expectedBirthdayDays} 天
+
+💡 如果主网站显示的数字与上述不符，说明时光计数器未正常工作。
+   请确保上传了最新的 scripts/main.js 文件。
+                    </div>
+                `;
+            } catch (error) {
+                output.innerHTML = `<p class="error">❌ 测试失败: ${error.message}</p>`;
+            }
+        }
+
+        async function checkAPI() {
+            const output = document.getElementById('testOutput');
+            output.innerHTML = '<p>🔄 正在测试API连接...</p>';
+            
+            try {
+                // 测试健康检查
+                const response = await fetch('/api/health', {
+                    cache: 'no-cache'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    output.innerHTML = `
+                        <div class="version-info">
+🔗 API连接测试结果：
+✅ 后端服务状态: ${data.status}
+📝 服务消息: ${data.message}
+🌐 连接正常: 是
+
+💡 后端API服务正常运行。如果前端功能仍不可用，
+   请检查 scripts/api-data.js 文件是否已更新。
+                        </div>
+                    `;
+                } else {
+                    output.innerHTML = `<p>❌ API连接失败: HTTP ${response.status}</p>`;
+                }
+            } catch (error) {
+                output.innerHTML = `
+                    <div class="version-info">
+❌ API连接测试失败: ${error.message}
+
+可能原因：
+1. 后端服务未运行
+2. 网络连接问题  
+3. 服务器配置问题
+
+请检查后端服务状态。
+                    </div>
+                `;
+            }
+        }
+
+        // 页面加载时自动检查
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔍 文件版本检查页面加载完成');
+            
+            // 5秒后自动检查一次
+            setTimeout(() => {
+                checkAllFiles();
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
