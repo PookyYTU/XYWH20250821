@@ -1,382 +1,359 @@
-# 小雨微寒后端部署指南
+# 小雨微寒网站后端部署指南
 
-## 系统要求
+## 概述
 
-- **操作系统**: Ubuntu 20.04+ / CentOS 7+
-- **Python**: 3.8+
-- **MySQL**: 5.7+ (已安装)
-- **Nginx**: 1.18+
+本文档说明如何在宝塔面板环境中部署小雨微寒个人网站的FastAPI后端服务。
+
+## 服务器环境要求
+
+- **操作系统**: Linux (CentOS/Ubuntu)
+- **面板**: 宝塔面板
+- **Python**: 3.10+
+- **数据库**: MySQL 5.7+
+- **Web服务器**: Nginx
 - **服务器**: 47.105.52.49
 
-## 部署步骤
+## 部署前准备
 
-### 1. 创建项目目录
+### 1. 数据库配置
 
-```bash
-# 创建项目目录
-sudo mkdir -p /opt/xiaoyuweihan
-cd /opt/xiaoyuweihan
+确保MySQL数据库已创建并配置：
 
-# 设置权限
-sudo chown -R www-data:www-data /opt/xiaoyuweihan
-sudo chmod -R 755 /opt/xiaoyuweihan
+```sql
+-- 数据库信息
+数据库名: xiaoyuweihan
+用户名: xiaoyuweihan
+密码: Duan1999
+主机: 47.105.52.49
+端口: 3306
 ```
 
-### 2. 上传后端代码
+### 2. 文件上传
 
-将整个 `backend` 目录上传到服务器的 `/opt/xiaoyuweihan/` 路径下：
+将整个 `backend` 目录上传到服务器的临时位置，例如 `/tmp/xiaoyuweihan-backend/`
+
+## 自动部署
+
+### 快速部署命令
 
 ```bash
-# 示例：使用scp上传
-scp -r ./backend root@47.105.52.49:/opt/xiaoyuweihan/
+# 1. 切换到根用户
+sudo su -
 
-# 设置权限
-sudo chown -R www-data:www-data /opt/xiaoyuweihan/backend
+# 2. 进入上传的目录
+cd /tmp/xiaoyuweihan-backend
+
+# 3. 给部署脚本执行权限
+chmod +x deploy-baota.sh
+
+# 4. 运行部署脚本
+./deploy-baota.sh
 ```
 
-### 3. 安装Python依赖
+### 部署脚本功能
+
+部署脚本 `deploy-baota.sh` 会自动完成以下工作：
+
+1. ✅ **环境检查** - 检查Python、MySQL、Nginx等依赖
+2. 📁 **目录准备** - 创建网站目录和日志目录
+3. 📋 **文件复制** - 复制后端代码到部署目录
+4. 🐍 **Python环境** - 创建虚拟环境并安装依赖
+5. 🗄️ **数据库初始化** - 创建数据库表结构
+6. 🌐 **Nginx配置** - 配置反向代理和静态文件服务
+7. ⚙️ **系统服务** - 配置systemd服务自动启动
+8. 🔐 **权限设置** - 设置正确的文件权限
+9. 🚀 **服务启动** - 启动后端API服务
+10. ✅ **部署验证** - 验证服务是否正常运行
+
+## 手动部署步骤
+
+如果自动部署脚本出现问题，可以按以下步骤手动部署：
+
+### 1. 准备目录
 
 ```bash
-cd /opt/xiaoyuweihan/backend
+mkdir -p /www/wwwroot/xiaoyuweihan/backend
+mkdir -p /www/wwwroot/xiaoyuweihan/backend/logs
+mkdir -p /www/wwwroot/xiaoyuweihan/backend/uploads
+```
 
-# 创建虚拟环境
-python3 -m venv venv
+### 2. 复制文件
 
-# 激活虚拟环境
+```bash
+cp -r /tmp/xiaoyuweihan-backend/* /www/wwwroot/xiaoyuweihan/backend/
+```
+
+### 3. 创建Python虚拟环境
+
+```bash
+cd /www/wwwroot/xiaoyuweihan/backend
+/usr/local/bin/python3.10 -m venv venv
 source venv/bin/activate
-
-# 安装依赖
-pip install -r requirements.txt
-
-# 如果pip版本较老，可能需要升级
 pip install --upgrade pip
+pip install -r requirements.txt
 ```
 
 ### 4. 配置环境变量
 
+检查 `.env` 文件中的数据库配置：
+
 ```bash
-cd /opt/xiaoyuweihan/backend
+# 编辑 .env 文件
+vi .env
 
-# 编辑环境配置文件
-nano .env
-```
-
-检查并修改以下配置：
-
-```env
-# FastAPI后端配置
-DEBUG=False
-SECRET_KEY=xiaoyuweihan_secret_key_2025_production
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# 数据库配置
-DB_HOST=localhost
+# 确保以下配置正确：
+DATABASE_URL=mysql+pymysql://xiaoyuweihan:Duan1999@47.105.52.49:3306/xiaoyuweihan
+DB_HOST=47.105.52.49
 DB_PORT=3306
-DB_USER=root
+DB_USER=xiaoyuweihan
 DB_PASSWORD=Duan1999
 DB_NAME=xiaoyuweihan
-
-# 文件上传配置
-UPLOAD_DIR=/opt/xiaoyuweihan/backend/uploads
-MAX_FILE_SIZE=50000000
-ALLOWED_EXTENSIONS=.jpg,.jpeg,.png,.gif,.bmp,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md,.mp3,.mp4,.avi,.mov,.zip,.rar
-
-# CORS配置
-ALLOWED_ORIGINS=http://47.105.52.49,http://47.105.52.49:80,http://47.105.52.49:443,https://47.105.52.49
 ```
 
-### 5. 数据库初始化
+### 5. 初始化数据库
 
 ```bash
-# 登录MySQL
-mysql -u root -p
-
-# 创建数据库（如果还没有）
-CREATE DATABASE IF NOT EXISTS xiaoyuweihan CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-# 创建专用用户（推荐）
-CREATE USER 'xiaoyuweihan'@'localhost' IDENTIFIED BY 'Duan1999';
-GRANT ALL PRIVILEGES ON xiaoyuweihan.* TO 'xiaoyuweihan'@'localhost';
-FLUSH PRIVILEGES;
-
-EXIT;
+python test_db_connection.py
 ```
 
-### 6. 测试后端服务
+### 6. 配置Nginx
 
 ```bash
-cd /opt/xiaoyuweihan/backend
-
-# 激活虚拟环境
-source venv/bin/activate
-
-# 测试启动
-python main.py
-
-# 如果成功，应该看到类似输出：
-# INFO:     Started server process [xxxx]
-# INFO:     Waiting for application startup.
-# ✅ 后端服务启动完成！
-# INFO:     Application startup complete.
-# INFO:     Uvicorn running on http://0.0.0.0:8000
+cp nginx.conf /www/server/nginx/conf/conf.d/xiaoyuweihan.conf
+/www/server/nginx/sbin/nginx -t
+/www/server/nginx/sbin/nginx -s reload
 ```
 
-按 `Ctrl+C` 停止测试服务。
-
-### 7. 配置systemd服务
+### 7. 配置系统服务
 
 ```bash
-# 复制服务文件
-sudo cp /opt/xiaoyuweihan/backend/xiaoyuweihan-backend.service /etc/systemd/system/
-
-# 重新加载systemd
-sudo systemctl daemon-reload
-
-# 启动服务
-sudo systemctl start xiaoyuweihan-backend
-
-# 检查状态
-sudo systemctl status xiaoyuweihan-backend
-
-# 设置开机自启
-sudo systemctl enable xiaoyuweihan-backend
+cp xiaoyuweihan-backend.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable xiaoyuweihan-backend
+systemctl start xiaoyuweihan-backend
 ```
 
-### 8. 配置Nginx
+### 8. 设置权限
 
 ```bash
-# 安装Nginx（如果还没有）
-sudo apt update
-sudo apt install nginx
-
-# 复制Nginx配置
-sudo cp /opt/xiaoyuweihan/backend/nginx.conf /etc/nginx/sites-available/xiaoyuweihan
-
-# 创建软链接
-sudo ln -s /etc/nginx/sites-available/xiaoyuweihan /etc/nginx/sites-enabled/
-
-# 删除默认配置（可选）
-sudo rm -f /etc/nginx/sites-enabled/default
-
-# 测试配置
-sudo nginx -t
-
-# 重启Nginx
-sudo systemctl restart nginx
-sudo systemctl enable nginx
-```
-
-### 9. 部署前端文件
-
-```bash
-# 创建前端目录
-sudo mkdir -p /var/www/xiaoyuweihan
-
-# 上传前端文件
-# 将除了backend目录外的所有文件上传到 /var/www/xiaoyuweihan/
-
-# 设置权限
-sudo chown -R www-data:www-data /var/www/xiaoyuweihan
-sudo chmod -R 755 /var/www/xiaoyuweihan
-```
-
-### 10. 防火墙配置
-
-```bash
-# 允许HTTP和HTTPS
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-
-# 如果直接访问后端，允许8000端口（可选）
-sudo ufw allow 8000/tcp
-
-# 重新加载防火墙
-sudo ufw reload
+chown -R www:www /www/wwwroot/xiaoyuweihan
+chmod -R 755 /www/wwwroot/xiaoyuweihan
+chmod -R 775 /www/wwwroot/xiaoyuweihan/backend/logs
+chmod -R 775 /www/wwwroot/xiaoyuweihan/backend/uploads
 ```
 
 ## 服务管理
 
-### 启动/停止/重启服务
+### 常用命令
 
 ```bash
-# 后端服务
-sudo systemctl start xiaoyuweihan-backend
-sudo systemctl stop xiaoyuweihan-backend
-sudo systemctl restart xiaoyuweihan-backend
+# 查看服务状态
+systemctl status xiaoyuweihan-backend
 
-# Nginx
-sudo systemctl start nginx
-sudo systemctl stop nginx
-sudo systemctl restart nginx
+# 启动服务
+systemctl start xiaoyuweihan-backend
+
+# 停止服务
+systemctl stop xiaoyuweihan-backend
+
+# 重启服务
+systemctl restart xiaoyuweihan-backend
+
+# 查看服务日志
+journalctl -u xiaoyuweihan-backend -f
+
+# 重载Nginx配置
+/www/server/nginx/sbin/nginx -s reload
 ```
-
-### 查看日志
-
-```bash
-# 后端服务日志
-sudo journalctl -u xiaoyuweihan-backend -f
-
-# 后端应用日志
-tail -f /opt/xiaoyuweihan/backend/logs/error.log
-tail -f /opt/xiaoyuweihan/backend/logs/access.log
-
-# Nginx日志
-tail -f /var/log/nginx/xiaoyuweihan_access.log
-tail -f /var/log/nginx/xiaoyuweihan_error.log
-```
-
-## 备份策略
-
-### 数据库备份
-
-```bash
-# 创建备份脚本
-sudo nano /opt/xiaoyuweihan/backup.sh
-```
-
-```bash
-#!/bin/bash
-# 数据库备份脚本
-
-BACKUP_DIR="/opt/xiaoyuweihan/backups"
-DATE=$(date +%Y%m%d_%H%M%S)
-DB_NAME="xiaoyuweihan"
-DB_USER="root"
-DB_PASS="Duan1999"
-
-# 创建备份目录
-mkdir -p $BACKUP_DIR
-
-# 备份数据库
-mysqldump -u$DB_USER -p$DB_PASS $DB_NAME > $BACKUP_DIR/xiaoyuweihan_$DATE.sql
-
-# 删除7天前的备份
-find $BACKUP_DIR -name "*.sql" -mtime +7 -delete
-
-echo "数据库备份完成: xiaoyuweihan_$DATE.sql"
-```
-
-```bash
-# 设置执行权限
-sudo chmod +x /opt/xiaoyuweihan/backup.sh
-
-# 设置定时任务（每天凌晨2点备份）
-sudo crontab -e
-# 添加：0 2 * * * /opt/xiaoyuweihan/backup.sh
-```
-
-### 文件备份
-
-```bash
-# 备份上传的文件
-tar -czf /opt/xiaoyuweihan/backups/uploads_$(date +%Y%m%d).tar.gz /opt/xiaoyuweihan/backend/uploads/
-```
-
-## 监控和维护
 
 ### 健康检查
 
 ```bash
-# 检查API健康状态
-curl http://localhost:8000/api/health
+# 检查API服务
+curl http://127.0.0.1:8000/api/health
 
-# 检查前端访问
+# 检查网站访问
 curl http://47.105.52.49/
 
-# 检查服务状态
-sudo systemctl status xiaoyuweihan-backend
-sudo systemctl status nginx
+# 查看进程
+ps aux | grep gunicorn
 ```
-
-### 性能优化
-
-1. **Gunicorn工作进程调优**：
-   - 根据CPU核心数调整 `workers` 数量
-   - 监控内存使用情况
-
-2. **Nginx缓存配置**：
-   - 静态文件缓存已配置
-   - 可根据需要调整缓存时间
-
-3. **数据库优化**：
-   - 定期清理无用数据
-   - 添加必要的索引
-
-## 故障排除
-
-### 常见问题
-
-1. **后端服务无法启动**：
-   ```bash
-   # 检查日志
-   sudo journalctl -u xiaoyuweihan-backend -n 50
-   
-   # 检查端口占用
-   sudo netstat -tlnp | grep 8000
-   ```
-
-2. **数据库连接失败**：
-   - 检查MySQL服务状态
-   - 验证数据库配置
-   - 确认网络连接
-
-3. **文件上传失败**：
-   - 检查上传目录权限
-   - 确认磁盘空间
-   - 查看文件大小限制
-
-4. **前端无法访问API**：
-   - 检查CORS配置
-   - 确认Nginx代理配置
-   - 查看防火墙设置
 
 ## 更新部署
 
-### 后端更新
+### 快速更新
+
+使用快速更新脚本：
 
 ```bash
-# 备份当前版本
-cp -r /opt/xiaoyuweihan/backend /opt/xiaoyuweihan/backend_backup_$(date +%Y%m%d)
+# 上传新版本文件后
+cd /www/wwwroot/xiaoyuweihan/backend
+chmod +x update.sh
+./update.sh
+```
 
-# 停止服务
-sudo systemctl stop xiaoyuweihan-backend
+### 手动更新
 
-# 更新代码
-# ... 上传新代码 ...
+```bash
+# 1. 停止服务
+systemctl stop xiaoyuweihan-backend
 
-# 更新依赖（如果需要）
-cd /opt/xiaoyuweihan/backend
+# 2. 备份当前版本
+cp -r /www/wwwroot/xiaoyuweihan/backend /www/wwwroot/xiaoyuweihan/backend.backup.$(date +%Y%m%d_%H%M%S)
+
+# 3. 复制新文件
+cp -r /path/to/new/backend/* /www/wwwroot/xiaoyuweihan/backend/
+
+# 4. 更新依赖（如果需要）
+cd /www/wwwroot/xiaoyuweihan/backend
 source venv/bin/activate
 pip install -r requirements.txt
 
-# 启动服务
-sudo systemctl start xiaoyuweihan-backend
-
-# 检查状态
-sudo systemctl status xiaoyuweihan-backend
+# 5. 启动服务
+systemctl start xiaoyuweihan-backend
 ```
 
-### 前端更新
+## 故障排查
+
+### 常见问题
+
+1. **服务启动失败**
+   ```bash
+   # 查看详细日志
+   journalctl -u xiaoyuweihan-backend -n 50
+   
+   # 检查配置文件
+   cd /www/wwwroot/xiaoyuweihan/backend
+   source venv/bin/activate
+   python -c "from app.config import settings; print('配置加载成功')"
+   ```
+
+2. **数据库连接失败**
+   ```bash
+   # 测试数据库连接
+   python test_db_connection.py
+   
+   # 检查MySQL服务
+   systemctl status mysql
+   ```
+
+3. **权限问题**
+   ```bash
+   # 重新设置权限
+   chown -R www:www /www/wwwroot/xiaoyuweihan
+   chmod -R 755 /www/wwwroot/xiaoyuweihan
+   ```
+
+4. **Nginx配置问题**
+   ```bash
+   # 测试Nginx配置
+   /www/server/nginx/sbin/nginx -t
+   
+   # 查看Nginx错误日志
+   tail -f /www/wwwroot/xiaoyuweihan/logs/nginx_error.log
+   ```
+
+### 日志文件位置
+
+- **应用日志**: `/www/wwwroot/xiaoyuweihan/backend/logs/`
+- **Nginx访问日志**: `/www/wwwroot/xiaoyuweihan/logs/nginx_access.log`
+- **Nginx错误日志**: `/www/wwwroot/xiaoyuweihan/logs/nginx_error.log`
+- **系统服务日志**: `journalctl -u xiaoyuweihan-backend`
+
+## 备份策略
+
+### 定期备份
+
+建议设置定期备份任务：
 
 ```bash
-# 备份当前版本
-cp -r /var/www/xiaoyuweihan /var/www/xiaoyuweihan_backup_$(date +%Y%m%d)
+# 创建备份脚本
+cat > /www/wwwroot/xiaoyuweihan/backup.sh << 'EOF'
+#!/bin/bash
+BACKUP_DIR="/www/backup/xiaoyuweihan/$(date +%Y%m%d_%H%M%S)"
+mkdir -p "$BACKUP_DIR"
 
-# 上传新的前端文件
-# ... 
+# 备份代码
+cp -r /www/wwwroot/xiaoyuweihan/backend "$BACKUP_DIR/"
 
-# 重新加载Nginx（可选）
-sudo systemctl reload nginx
+# 备份数据库
+mysqldump -h 47.105.52.49 -u xiaoyuweihan -pDuan1999 xiaoyuweihan > "$BACKUP_DIR/database.sql"
+
+echo "备份完成: $BACKUP_DIR"
+EOF
+
+chmod +x /www/wwwroot/xiaoyuweihan/backup.sh
+
+# 添加到定时任务
+echo "0 2 * * * /www/wwwroot/xiaoyuweihan/backup.sh" | crontab -
 ```
+
+## 安全配置
+
+### 防火墙设置
+
+```bash
+# 如果使用iptables
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+
+# 禁止直接访问后端端口
+iptables -A INPUT -p tcp --dport 8000 -s 127.0.0.1 -j ACCEPT
+iptables -A INPUT -p tcp --dport 8000 -j DROP
+```
+
+### SSL配置（可选）
+
+如果需要HTTPS，可以通过宝塔面板申请SSL证书，然后修改Nginx配置文件启用HTTPS重定向部分。
+
+## 监控和维护
+
+### 性能监控
+
+```bash
+# 查看系统资源
+htop
+
+# 查看服务资源占用
+systemctl status xiaoyuweihan-backend
+
+# 查看数据库连接数
+mysql -h 47.105.52.49 -u xiaoyuweihan -pDuan1999 -e "SHOW STATUS LIKE 'Threads_connected';"
+```
+
+### 日志轮转
+
+配置日志轮转避免日志文件过大：
+
+```bash
+cat > /etc/logrotate.d/xiaoyuweihan << 'EOF'
+/www/wwwroot/xiaoyuweihan/backend/logs/*.log {
+    daily
+    rotate 30
+    compress
+    delaycompress
+    missingok
+    notifempty
+    postrotate
+        systemctl reload xiaoyuweihan-backend
+    endscript
+}
+EOF
+```
+
+## 联系支持
+
+如果遇到部署问题，请检查：
+
+1. 📋 **部署日志** - 查看部署脚本输出
+2. 🔍 **系统日志** - `journalctl -u xiaoyuweihan-backend`
+3. 📁 **应用日志** - `/www/wwwroot/xiaoyuweihan/backend/logs/`
+4. 🌐 **Nginx日志** - `/www/wwwroot/xiaoyuweihan/logs/nginx_error.log`
+5. 🗄️ **数据库连接** - 运行 `python test_db_connection.py`
 
 ---
 
-## 联系信息
-
-如有问题，请联系系统管理员。
-
-部署完成后，可以通过以下地址访问：
-- 前端：http://47.105.52.49/
-- API文档：http://47.105.52.49/api/docs
-- 健康检查：http://47.105.52.49/api/health
+**部署完成后访问地址：**
+- 🌐 **网站主页**: http://47.105.52.49/
+- 📖 **API文档**: http://47.105.52.49/docs
+- 🔧 **API接口**: http://47.105.52.49/api/

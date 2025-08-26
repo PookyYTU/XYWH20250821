@@ -1,79 +1,48 @@
-from pydantic_settings import BaseSettings
-from pydantic import field_validator
-from typing import List, Union
+# -*- coding: utf-8 -*-
+"""
+配置管理模块
+"""
+
 import os
+from typing import Optional
+from pydantic_settings import BaseSettings
+from pydantic import Field
+
 
 class Settings(BaseSettings):
-    """应用配置"""
-    
-    # 基础配置
-    DEBUG: bool = False  # 生产环境
-    SECRET_KEY: str = "xiaoyuweihan_secret_key_2025_production"
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    """应用配置类"""
     
     # 数据库配置
-    DB_HOST: str = "localhost"
-    DB_PORT: int = 3306
-    DB_USER: str = "xiaoyuweihan"  # 宝塔创建的专用数据库用户（测试成功）
-    DB_PASSWORD: str = "Duan1999"
-    DB_NAME: str = "xiaoyuweihan"
+    database_url: str = Field(..., env="DATABASE_URL")
+    db_host: str = Field(..., env="DB_HOST")
+    db_port: int = Field(3306, env="DB_PORT")
+    db_user: str = Field(..., env="DB_USER")
+    db_password: str = Field(..., env="DB_PASSWORD")
+    db_name: str = Field(..., env="DB_NAME")
+    
+    # 应用配置
+    secret_key: str = Field(..., env="SECRET_KEY")
+    algorithm: str = Field("HS256", env="ALGORITHM")
+    access_token_expire_minutes: int = Field(30, env="ACCESS_TOKEN_EXPIRE_MINUTES")
     
     # 文件上传配置
-    UPLOAD_DIR: str = "/www/wwwroot/xiaoyuweihan/backend/uploads"
-    MAX_FILE_SIZE: int = 50000000  # 50MB
-    ALLOWED_EXTENSIONS: str = ".jpg,.jpeg,.png,.gif,.bmp,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md,.mp3,.mp4,.avi,.mov,.zip,.rar"
+    upload_dir: str = Field("uploads", env="UPLOAD_DIR")
+    max_file_size: int = Field(10485760, env="MAX_FILE_SIZE")  # 10MB
     
-    # CORS配置
-    ALLOWED_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000", 
-        "http://47.105.52.49",
-        "http://47.105.52.49:8000",
-        "http://47.105.52.49:80",
-        "http://47.105.52.49:443",
-        "*"  # 开发环境允许所有来源
-    ]
-    
-    @field_validator('ALLOWED_ORIGINS', mode='before')
-    @classmethod
-    def parse_allowed_origins(cls, v):
-        """处理ALLOWED_ORIGINS环境变量"""
-        if isinstance(v, str):
-            # 如果是字符串，尝试以逗号分割
-            if ',' in v:
-                return [origin.strip() for origin in v.split(',')]
-            else:
-                return [v.strip()]
-        elif isinstance(v, list):
-            return v
-        else:
-            # 返回默认值
-            return [
-                "http://localhost:3000",
-                "http://127.0.0.1:3000", 
-                "http://47.105.52.49",
-                "http://47.105.52.49:8000",
-                "http://47.105.52.49:80",
-                "http://47.105.52.49:443",
-                "*"
-            ]
+    # 服务器配置
+    host: str = Field("0.0.0.0", env="HOST")
+    port: int = Field(8000, env="PORT")
+    debug: bool = Field(False, env="DEBUG")
     
     class Config:
-        env_file = ".env"  # 现在使用正确的JSON格式
-        env_file_encoding = 'utf-8'
-        # 避免复杂类型的自动JSON解析
-        env_nested_delimiter = '__'
+        env_file = [".env.local", ".env"]
+        env_file_encoding = "utf-8"
         case_sensitive = False
-    
-    @property
-    def database_url(self) -> str:
-        """数据库连接URL"""
-        return f"mysql+pymysql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}?charset=utf8mb4"
-    
-    @property
-    def allowed_extensions_list(self) -> List[str]:
-        """允许的文件扩展名列表"""
-        return [ext.strip() for ext in self.ALLOWED_EXTENSIONS.split(",")]
 
+
+# 创建全局配置实例
 settings = Settings()
+
+# 确保上传目录存在
+if not os.path.exists(settings.upload_dir):
+    os.makedirs(settings.upload_dir, exist_ok=True)

@@ -1,34 +1,43 @@
-# systemd服务配置文件 - 宝塔版本
-# /etc/systemd/system/xiaoyuweihan-backend.service
-
 [Unit]
-Description=小雨微寒 Backend Service
+Description=小雨微寒个人网站后端服务
+Documentation=https://github.com/XYWH/xiaoyuweihan
 After=network.target mysql.service
-Wants=mysql.service
+Requires=mysql.service
 
 [Service]
 Type=notify
 User=www
 Group=www
+RuntimeDirectory=xiaoyuweihan-backend
 WorkingDirectory=/www/wwwroot/xiaoyuweihan/backend
-Environment="PATH=/www/wwwroot/xiaoyuweihan/backend/venv/bin"
-ExecStart=/www/wwwroot/xiaoyuweihan/backend/venv/bin/gunicorn -c gunicorn.conf.py main:app
+Environment=PATH=/usr/local/bin/python3.10:/usr/local/bin:/usr/bin:/bin
+Environment=PYTHONPATH=/www/wwwroot/xiaoyuweihan/backend
+ExecStart=/usr/local/bin/python3.10 -m gunicorn --config gunicorn.conf.py main:app
 ExecReload=/bin/kill -s HUP $MAINPID
-Restart=always
-RestartSec=3
+ExecStop=/bin/kill -s TERM $MAINPID
 KillMode=mixed
-TimeoutStopSec=5
+TimeoutStopSec=30
+PrivateTmp=true
+Restart=always
+RestartSec=10
 
-# 安全设置
+# 安全配置
 NoNewPrivileges=yes
-PrivateTmp=yes
 ProtectSystem=strict
 ProtectHome=yes
-ReadWritePaths=/www/wwwroot/xiaoyuweihan/backend/uploads /www/wwwroot/xiaoyuweihan/backend/logs
+ReadWritePaths=/www/wwwroot/xiaoyuweihan/backend
+ReadWritePaths=/tmp
+ReadWritePaths=/var/log
 
 # 资源限制
 LimitNOFILE=65536
 LimitNPROC=32768
+LimitCORE=0
+
+# 日志配置
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=xiaoyuweihan-backend
 
 [Install]
 WantedBy=multi-user.target
