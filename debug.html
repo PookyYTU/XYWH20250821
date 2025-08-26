@@ -91,6 +91,38 @@
     <script src="./scripts/api.js"></script>
     <script src="./scripts/api-data.js"></script>
     <script>
+        // 等待服务初始化
+        async function waitForServices() {
+            console.log('🔄 等待服务初始化...');
+            
+            // 等待API服务
+            let attempts = 0;
+            const maxAttempts = 20;
+            
+            while (attempts < maxAttempts && !window.apiService) {
+                console.log(`⏳ 等待API服务加载... (${attempts + 1}/${maxAttempts})`);
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            // 等待数据管理器
+            attempts = 0;
+            while (attempts < maxAttempts && !window.dataManager) {
+                console.log(`⏳ 等待数据管理器加载... (${attempts + 1}/${maxAttempts})`);
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            console.log('✅ 服务初始化完成');
+            console.log('API服务状态:', !!window.apiService);
+            console.log('数据管理器状态:', !!window.dataManager);
+            
+            return {
+                apiService: !!window.apiService,
+                dataManager: !!window.dataManager
+            };
+        }
+        
         // 调试函数
         function showResult(elementId, message, type = 'info') {
             const element = document.getElementById(elementId);
@@ -142,52 +174,97 @@
 
         async function testFoodAPI() {
             try {
+                console.log('🍽️ 开始测试美食API...');
+                
                 if (!window.dataManager) {
-                    throw new Error('数据管理器未加载');
+                    console.error('数据管理器未加载，尝试等待...');
+                    await waitForServices();
+                    
+                    if (!window.dataManager) {
+                        throw new Error('数据管理器未加载，请检查api-data.js是否正确加载');
+                    }
                 }
                 
+                console.log('✅ 数据管理器已加载，开始获取美食记录...');
                 const records = await window.dataManager.getFoodRecords();
+                console.log('📈 美食记录数据:', records);
+                
                 showResult('foodResult', `✅ 美食API测试成功！<br>记录数量: ${records.length}`, 'success');
             } catch (error) {
+                console.error('❌ 美食API测试失败:', error);
                 showResult('foodResult', `❌ 美食API测试失败: ${error.message}`, 'error');
             }
         }
 
         async function testMovieAPI() {
             try {
+                console.log('🎥 开始测试电影API...');
+                
                 if (!window.dataManager) {
-                    throw new Error('数据管理器未加载');
+                    console.error('数据管理器未加载，尝试等待...');
+                    await waitForServices();
+                    
+                    if (!window.dataManager) {
+                        throw new Error('数据管理器未加载，请检查api-data.js是否正确加载');
+                    }
                 }
                 
+                console.log('✅ 数据管理器已加载，开始获取电影记录...');
                 const records = await window.dataManager.getMovieRecords();
+                console.log('📈 电影记录数据:', records);
+                
                 showResult('movieResult', `✅ 电影API测试成功！<br>记录数量: ${records.length}`, 'success');
             } catch (error) {
+                console.error('❌ 电影API测试失败:', error);
                 showResult('movieResult', `❌ 电影API测试失败: ${error.message}`, 'error');
             }
         }
 
         async function testCalendarAPI() {
             try {
+                console.log('📅 开始测试日历API...');
+                
                 if (!window.dataManager) {
-                    throw new Error('数据管理器未加载');
+                    console.error('数据管理器未加载，尝试等待...');
+                    await waitForServices();
+                    
+                    if (!window.dataManager) {
+                        throw new Error('数据管理器未加载，请检查api-data.js是否正确加载');
+                    }
                 }
                 
+                console.log('✅ 数据管理器已加载，开始获取日历备注...');
                 const notes = await window.dataManager.getCalendarNotes();
-                showResult('calendarResult', `✅ 日历API测试成功！<br>备注数量: ${Array.isArray(notes) ? notes.length : Object.keys(notes).length}`, 'success');
+                console.log('📈 日历备注数据:', notes);
+                
+                const notesCount = Array.isArray(notes) ? notes.length : Object.keys(notes).length;
+                showResult('calendarResult', `✅ 日历API测试成功！<br>备注数量: ${notesCount}`, 'success');
             } catch (error) {
+                console.error('❌ 日历API测试失败:', error);
                 showResult('calendarResult', `❌ 日历API测试失败: ${error.message}`, 'error');
             }
         }
 
         async function testFileAPI() {
             try {
+                console.log('📁 开始测试文件API...');
+                
                 if (!window.dataManager) {
-                    throw new Error('数据管理器未加载');
+                    console.error('数据管理器未加载，尝试等待...');
+                    await waitForServices();
+                    
+                    if (!window.dataManager) {
+                        throw new Error('数据管理器未加载，请检查api-data.js是否正确加载');
+                    }
                 }
                 
+                console.log('✅ 数据管理器已加载，开始获取文件列表...');
                 const files = await window.dataManager.getFileRecords();
+                console.log('📈 文件列表数据:', files);
+                
                 showResult('fileResult', `✅ 文件API测试成功！<br>文件数量: ${files.length}`, 'success');
             } catch (error) {
+                console.error('❌ 文件API测试失败:', error);
                 showResult('fileResult', `❌ 文件API测试失败: ${error.message}`, 'error');
             }
         }
@@ -215,8 +292,23 @@
         }
 
         // 页面加载完成后自动运行测试
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             console.log('🔧 调试页面加载完成');
+            
+            // 等待服务初始化
+            const services = await waitForServices();
+            
+            if (services.apiService) {
+                console.log('✅ API服务已加载');
+            } else {
+                console.error('❌ API服务加载失败');
+            }
+            
+            if (services.dataManager) {
+                console.log('✅ 数据管理器已加载');
+            } else {
+                console.error('❌ 数据管理器加载失败');
+            }
             
             // 延迟一秒后自动测试时光计数器
             setTimeout(() => {

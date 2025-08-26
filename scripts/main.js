@@ -227,13 +227,27 @@ function setupTimeCounter() {
         }
     }
     
-    // 立即更新一次
-    updateCounters();
+    // 确保DOM元素已加载，然后立即更新一次
+    const checkAndUpdate = () => {
+        const loveDaysElement = document.getElementById('lovedays');
+        const birthdayElement = document.getElementById('birthday');
+        
+        if (loveDaysElement && birthdayElement) {
+            console.log('✅ DOM元素已就绪，开始更新计数器');
+            updateCounters();
+            
+            // 每天更新一次
+            setInterval(updateCounters, 24 * 60 * 60 * 1000);
+            
+            console.log('✅ 时光计数器设置完成');
+        } else {
+            console.warn('⚠️ DOM元素尚未就绪，100ms后重试...');
+            setTimeout(checkAndUpdate, 100);
+        }
+    };
     
-    // 每天更新一次
-    setInterval(updateCounters, 24 * 60 * 60 * 1000);
-    
-    console.log('✅ 时光计数器设置完成');
+    // 开始检查和更新
+    checkAndUpdate();
 }
 
 // 模态框设置
